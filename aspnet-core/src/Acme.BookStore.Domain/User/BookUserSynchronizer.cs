@@ -10,8 +10,10 @@ using Volo.Abp.Users;
 namespace Acme.BookStore.Users;
 
 public class BookUserSynchronizer :
-    IDistributedEventHandler<EntityUpdatedEto<UserEto>>,
-    ITransientDependency
+    IDistributedEventHandler<EntityUpdatedEto<UserEto>>
+    //ITransientDependency  
+    //暫時註解上面那行 此行在執行test時會產生以下錯誤
+    //SqliteConnection does not support nested transactions
 {
     protected IBookUserRepository UserRepository { get; }
 

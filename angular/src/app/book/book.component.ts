@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ListService, PagedResultDto, validateUrl } from '@abp/ng.core';
-import { BookService, BookDto, bookTypeOptions } from '@proxy/books';
+import { BookService, BookDto, bookTypeOptions, AuthorLookupDto } from '@proxy/books';
 import { query } from '@angular/animations';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConfirmationService,Confirmation } from '@abp/ng.theme.shared';
 
 import { NgbDateNativeAdapter, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-book',
@@ -16,9 +18,11 @@ import { NgbDateNativeAdapter, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap
 export class BookComponent implements OnInit {
   book = { item: [], totalCount: 0 } as PagedResultDto<BookDto>;
 
-  selelctedBook = {} as BookDto;
+  selectedBook = {} as BookDto;
 
   form: FormGroup;
+
+  author$:Observable<AuthorLookupDto[]>
 
   bookTypes = bookTypeOptions;
 
@@ -29,7 +33,9 @@ export class BookComponent implements OnInit {
     private bookService: BookService,
     private fb: FormBuilder,
     private confirmation:ConfirmationService
-  ) {}
+  ) {
+    this.author$ = bookService.getAuthorLookup().pipe(map((r) => r.items));
+  }
 
   ngOnInit(): void {
     const bookStreamCreator = query => this.bookService.getList(query);
@@ -40,14 +46,14 @@ export class BookComponent implements OnInit {
   }
 
   createBook() {
-    this.selelctedBook = {} as BookDto;
+    this.selectedBook = {} as BookDto;
     this.buildForm();
     this.isModalOpen = true;
   }
 
   editBook(id: string) {
     this.bookService.get(id).subscribe(book => {
-      this.selelctedBook = book;
+      this.selectedBook = book;
       this.buildForm();
       this.isModalOpen = true;
     });
@@ -63,13 +69,14 @@ export class BookComponent implements OnInit {
 
   buildForm() {
     this.form = this.fb.group({
-      name: [this.selelctedBook.name || '', Validators.required],
-      type: [this.selelctedBook.type || null, Validators.required],
+      authorId:[this.selectedBook.authorId || null,Validators.required],
+      name: [this.selectedBook.name || '', Validators.required],
+      type: [this.selectedBook.type || null, Validators.required],
       publishDate: [
-        this.selelctedBook.publishDate ? new Date(this.selelctedBook.publishDate) : null,
+        this.selectedBook.publishDate ? new Date(this.selectedBook.publishDate) : null,
         Validators.required,
       ],
-      price: [this.selelctedBook.price || null, Validators.required],
+      price: [this.selectedBook.price || null, Validators.required],
     });
   }
 
@@ -78,8 +85,8 @@ export class BookComponent implements OnInit {
       return;
     }
 
-    const request = this.selelctedBook.id
-      ? this.bookService.update(this.selelctedBook.id, this.form.value)
+    const request = this.selectedBook.id
+      ? this.bookService.update(this.selectedBook.id, this.form.value)
       : this.bookService.create(this.form.value);
 
     request.subscribe(()=>{

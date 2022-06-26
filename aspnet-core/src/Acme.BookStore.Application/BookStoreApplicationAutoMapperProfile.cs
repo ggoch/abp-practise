@@ -17,5 +17,6 @@ public class BookStoreApplicationAutoMapperProfile : Profile
         CreateMap<BookUser, BookUserDto>();
         CreateMap<CreateUpdateBookUserDto, BookUserDto>();
         CreateMap<Author, AuthorDto>();
+        CreateMap<Author, AuthorLookupDto>();
     }
 }
